@@ -37,7 +37,7 @@ const Navbar = () => {
           styles={ address ? 'bg-[#1dc071]' : 'bg-[#8c6dfd]'}
           hadnleClick={() => {
             if(address) navigate('create-campaign')
-            // else 'connect'
+            // else 'connect()'
           }}
         />
 
@@ -47,6 +47,29 @@ const Navbar = () => {
           </div>
         </Link>
       </div>
+
+
+      {/* Small Screen Navigation  */}
+          <div className="sm:hidden flex justify-between items-center relative">
+            <div className="w-[52px] h-[52px] rounded-[10px] bg-[#2c2f32] flex justify-center items-center cursor-pointer">
+              <img src={thirdweb} className="w-[60%] h-[60%] obeject-contain" />
+            </div>
+
+            <img src={menu} className="w-[34px] h-[34px] object-contain cursor-pointer" onClick={() => setToggleDrawer(!toggleDrawer)} />
+
+            <div className={`absolute top-[60px] right-0 left-0 bg-[#1c1c24] z-10 shadow-secondary py-4 ${!toggleDrawer} ? '-translate-y-[100vh]' : 'translate-y-0' transition-all duration-700`}>
+              <ul className="mb-4">
+                {navlinks.map((link) => (
+                  <li key={link.name} className={`flex p-4 ${isActive}`}>
+
+                  </li>
+                ))}
+              </ul>
+
+            </div>
+
+          </div>
+
     </div>
   );
 };
