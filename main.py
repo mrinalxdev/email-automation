@@ -1,71 +1,46 @@
-from pytimedinput import timedInput
-import os
-from random import randint
+import json
+from difflib import get_close_matches
 
 
-def print_field():
-    for cell in CELLS:
-        if cell in snake_body:
-            print('X', end='')
-        if cell[0] in (0, FIELD_WIDTH - 1) or cell[1] in (0, FIELD_HEIGHT - 1):
-            print("*", end='')
-        elif cell == apple_pos:
-            print('a', end='')
-        else:
-            print(' ', end='')
+def load_knowledge_base(file_path: str) -> dict:
+    with open(file_path, 'r') as file:
+        data: dict = json.load(file)
+    return data
 
-        if cell[0] == FIELD_WIDTH - 1:
-            print('')
+def save_knowledge_base(file_path: str, data: dict):
+    with open(file_path, "w")as file:
+        json.dump(data, file, indent=2)
 
+def find_best_matches(user_question: str, questions: list[str]) -> str | None:
+    matches : list = get_close_matches(user_question, questions, n=1, cutoff=0.6)
+    return matches[0] if matches else None
 
-def update_snake():
-    new_head = snake_body[0][0] + direction[0], snake_body[0][1] + direction[1]
-    snake_body.insert(0, new_head)
-    snake_body.pop(-1)
+def get_answer_for_question(question: str, knowledge_base: dict) -> str | None: 
+    for q in knowledge_base["questions"]:
+        if q["question"] == question:
+            return q["answer"]
 
+def chat_bot():
+    knowledge_base : dict = load_knowledge_base('knowledge_base.json')
 
-def apple_collision():
-    global apple_pos, eaten
-    if apple_pos == snake_body[0]:
-        apple_pos = place_apple()
-        eaten = True
+    while True:
+        user_input: str = input("You: ")
 
-
-def place_apple():
-    col = randint(1, FIELD_WIDTH - 2)
-    row = randint(1, FIELD_HEIGHT - 2)
-    while (col, row):
-        col = randint(1, FIELD_WIDTH - 2)
-        row = randint(1, FIELD_HEIGHT - 2)
-    return (col, row)
-
-
-FIELD_WIDTH = 32
-FIELD_HEIGHT = 16
-CELLS = [(col, row) for row in range(FIELD_HEIGHT)
-         for col in range(FIELD_WIDTH)]
-
-
-snake_body = [(5, FIELD_HEIGHT // 2), (4, FIELD_HEIGHT // 2),
-              (3, FIELD_HEIGHT // 2)]
-DIRECTIONS = {'left': (-1, 0), 'right': (1, 0), 'up': (0, -1), 'down': (0, 1)}
-direction = DIRECTIONS['right']
-
-apple_pos = place_apple()
-
-
-while True:
-    os.system('cls')
-    print_field()
-
-    txt, _ = timedInput('Move the snake :', timeout=0.3)
-    match txt:
-        case 'w': direction = DIRECTIONS['up']
-        case 'a': direction = DIRECTIONS['left']
-        case 's': direction = DIRECTIONS['down']
-        case 'd': direction = DIRECTIONS['right']
-        case 'q':
-
+        if user_input.lower() == "quit":
             break
 
-    update_snake()
+        best_match: str | None = find_best_matches(user_input, [q["question"] for q in knowledge_base["questions"]])
+
+        if best_match: 
+            answer : str = get_answer_for_question(best_match, knowledge_base)
+            print(f'Bot: I dont know the answer. Can you teach me ??')
+            new_answer : str = input('Type the answer or "Skip" to skip :')
+
+            if new_answer.lower() != 'skip':
+                knowledge_base["questions"].append({"question" : user_input, "answer" : new_answer})
+                save_knowledge_base('knowledge_base.json', knowledge_base)
+                print('Bot : Thank you I learned a new Response !')
+
+
+if __name__ == "__main__":
+    chat_bot()
